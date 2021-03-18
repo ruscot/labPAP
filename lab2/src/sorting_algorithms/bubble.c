@@ -1,3 +1,33 @@
+Skip to content
+Search or jump to…
+
+Pull requests
+Issues
+Marketplace
+Explore
+ 
+@vinsonc 
+ruscot
+/
+labPAP
+1
+00
+Code
+Issues
+Pull requests
+Actions
+Projects
+Wiki
+Security
+Insights
+labPAP/lab2/src/sorting_algorithms/bubble.c
+@ruscot
+ruscot ajout des fichiers du lab2
+Latest commit 2474e3c 2 days ago
+ History
+ 1 contributor
+214 lines (167 sloc)  5.33 KB
+  
 #include <stdio.h>
 #include <omp.h>
 #include <stdint.h>
@@ -83,6 +113,76 @@ void parallel_bubble_sort (uint64_t *T, const uint64_t size)
     return;
 }
 
+void parallel_bubble_sort_charly (uint64_t *T, const uint64_t size){
+    register unsigned int i ;
+    uint64_t temp;
+    int pasfini = 1;
+    int pasfinisecond;
+    int maxnThread = omp_get_max_threads();
+    int sizechunk = size / maxnThread;
+    int reste = size % maxnThread;
+    // printf("nombre de thread : %d, taille des espaces : %d, reste = %d\n",maxnThread,sizechunk,reste);
+    
+    while(!is_sorted(T,size)){
+    //while(pasfini != 0){
+        //pasfini = 0;
+        //pasfinisecond = 0;
+        /*
+        printf("-------------------debut arrangement chunk-------------------\n");
+        print_array(T,size);
+        */
+        #pragma omp parallel 
+        {
+            //#pragma omp for private(temp),schedule(dynamic,sizechunk),reduction(+:pasfini)
+            #pragma omp for private(temp),schedule(dynamic,sizechunk)
+            for(i = 0; i < size - 1 ; i++){
+                //printf("%d / %d -> %d == %d / %d ->%d\n",i,sizechunk,(i / sizechunk),i+1,sizechunk, ((i+1) / sizechunk));
+                if(T[i] > T[i+1] && (i / sizechunk) == ((i+1) / sizechunk)){
+                    //printf("%d avec %d    ",i,i+1);
+                    //pasfini++;
+                    temp = T[i+1];
+                    T[i+1] = T[i];
+                    T[i] = temp;
+                }
+            }
+        }
+
+        /*
+        printf("\n");
+        print_array(T,size);
+        printf("--------------------fin arrangement chunk--------------------\n");
+        
+        printf("-------------------echange entre chunk-------------------\n");
+        print_array(T,size);
+        */
+        #pragma omp parallel
+        {
+            //#pragma omp for firstprivate(temp),reduction(+:pasfinisecond)
+            #pragma omp for firstprivate(temp)
+            for(i = 1; i < maxnThread ; i++){
+                int i1 = sizechunk * i - 1;
+                int i2 = sizechunk * i;
+                if(T[i1] > T[i2]){
+                    // printf("%d avec %d -> %d > %d    ",i1,i2,T[i1],T[i2]);
+                    //pasfinisecond++;
+                    temp = T[i1];
+                    T[i1] = T[i2];
+                    T[i2] = temp;
+                }
+            }
+        }
+        //pasfini += pasfinisecond;
+        /*
+        printf("\n");
+        print_array(T,size);
+        printf("--------------------fin echange chunk--------------------\n");
+        */
+
+    }
+    //printf("fin\n");
+    return;
+}
+
 
 int main (int argc, char **argv)
 {
@@ -130,14 +230,14 @@ int main (int argc, char **argv)
             fprintf(stderr, "ERROR: the sequential sorting of the array failed\n") ;
             print_array (X, N) ;
             exit (-1) ;
-	}
+    }
 #else
         if (! is_sorted_sequence (X, N))
         {
             fprintf(stderr, "ERROR: the sequential sorting of the array failed\n") ;
             print_array (X, N) ;
             exit (-1) ;
-	}
+    }
 #endif
     }
 
@@ -169,13 +269,13 @@ int main (int argc, char **argv)
         {
             fprintf(stderr, "ERROR: the parallel sorting of the array failed\n") ;
             exit (-1) ;
-	}
+    }
 #else
         if (! is_sorted_sequence (X, N))
         {
             fprintf(stderr, "ERROR: the parallel sorting of the array failed\n") ;
             exit (-1) ;
-	}
+    }
 #endif
                 
         
@@ -212,3 +312,15 @@ int main (int argc, char **argv)
     free(Z);
     
 }
+© 2021 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Docs
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About
